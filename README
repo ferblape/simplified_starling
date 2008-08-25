@@ -152,6 +152,7 @@ Confirm an +order+ payment and push into +starling+ an stock recalculation job.
 
     ##
     # app/controllers/payments_controller.rb
+    #
     class PaymentsController < ApplicationController
 
       def confirm
@@ -165,6 +166,7 @@ Confirm an +order+ payment and push into +starling+ an stock recalculation job.
 
     ##
     # app/models/order.rb
+    #
     class Order < ActiveRecord::Base
 
       def confirm_payment
@@ -176,6 +178,7 @@ Confirm an +order+ payment and push into +starling+ an stock recalculation job.
 
     ##
     # app/models/stock.rb
+    #
     class Stock < ActiveRecord::Base
 
       def self.recalculate
@@ -186,8 +189,57 @@ Confirm an +order+ payment and push into +starling+ an stock recalculation job.
 
     end
 
+=== Example 3
+
+Push a task with options.
+
+    ##
+    # app/controllers/repositories_controller.rb
+    #
+    class RepositoriesController < ApplicationController
+
+      def index
+        @repositories = Repository.find(:all, :limit => 100)
+      end
+
+      def generate
+        100.times do |i|
+          token = CGI::Session.generate_unique_id.first(8)
+          Repository.push :generate, { :token => token }
+        end
+        redirect_to :action => 'index'
+      end
+
+      def update
+        repository = Repository.find_by_token(params[:id])
+        token = CGI::Session.generate_unique_id.first(8)
+        repository.push :update_token, { :token => token }
+        redirect_to :action => 'show', :id => token
+      end
+
+    end
+
+    ##
+    # app/models/repository.rb
+    #
+    class Repository < ActiveRecord::Base
+    
+      def self.generate(options = {})
+        # Create repositories with token as it's name ...
+        # ...
+      end
+
+      def update_token
+        # ...
+      end
+
+    end
+
+  end
+
 == Acknowledgments
 
 - Blaine Cook, Twitter Inc. for this nice queue system.
+- Joe Van Dyk for his work on adding options to tasks, Tanga.com LLC
 
 Copyright (c) 2008 Francesc Esplugas Marti, released under the MIT license
