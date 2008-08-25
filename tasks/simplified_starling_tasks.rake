@@ -6,7 +6,7 @@ namespace :simplified_starling do
   desc "Start starling server"
   task :start do
     config = YAML.load_file("#{RAILS_ROOT}/config/starling.yml")[RAILS_ENV]
-    unless File.exist?(config['pid_file'])
+    unless Simplified::Starling.running?
       starling_binary = `which starling`.strip
       raise RuntimeError, "Cannot find starling" if starling_binary.blank?
       options = []

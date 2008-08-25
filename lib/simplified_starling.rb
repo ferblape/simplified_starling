@@ -8,6 +8,15 @@ module Simplified
 
   class Starling
 
+    def self.running?
+      config = YAML.load_file("#{RAILS_ROOT}/config/starling.yml")[RAILS_ENV]
+      if File.exist?(config['pid_file'])
+        Process.getpgid(File.read(config['pid_file']).to_i) rescue return false
+      else
+        return false
+      end
+    end
+
     def self.prepare(queue)
       self.feedback("Queue processor started for `#{queue}`.")
       start_processing(queue)
