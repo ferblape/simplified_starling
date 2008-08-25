@@ -35,7 +35,6 @@ namespace :simplified_starling do
     else
       Simplified::Starling.feedback("Starling is not running")
     end
-    puts pid_file
   end
 
   desc "Restart starling server"
@@ -50,8 +49,8 @@ namespace :simplified_starling do
   task :start_processing_jobs => :environment do
     begin
       config = YAML.load_file("#{RAILS_ROOT}/config/starling.yml")[RAILS_ENV]
-      pid_file = "#{RAILS_ROOT}/tmp/pids/starling_#{RAILS_ENV}.pid"
-      unless File.exist?(pid_file)
+      queue_pid_file = config['queue_pid_file']
+      unless File.exist?(queue_pid_file)
         Simplified::Starling.stats
         Simplified::Starling.process(config['queue'])
         Simplified::Starling.feedback("Started processing jobs")
@@ -65,11 +64,12 @@ namespace :simplified_starling do
 
   desc "Stop processing jobs"
   task :stop_processing_jobs do
-    pid_file = "#{RAILS_ROOT}/tmp/pids/starling_#{RAILS_ENV}.pid"
-    if File.exist?(pid_file)
-      system "kill -9 `cat #{pid_file}`"
+    config = YAML.load_file("#{RAILS_ROOT}/config/starling.yml")[RAILS_ENV]
+    queue_pid_file = config['queue_pid_file']
+    if File.exist?(queue_pid_file)
+      system "kill -9 `cat #{queue_pid_file}`"
       Simplified::Starling.feedback("Stopped processing jobs")
-      File.delete(pid_file)
+      File.delete(queue_pid_file)
     else
       Simplified::Starling.feedback("Jobs are not being processed")
     end
@@ -79,7 +79,7 @@ namespace :simplified_starling do
   task :start_and_process_jobs do
     Rake::Task['simplified:starling:start'].invoke
     sleep 10
-    Rake::Task['simplified:starling:start_processing_queue'].invoke
+    Rake::Task['simplified:starling:start_processing_jobs'].invoke
   end
 
   desc "Server stats"
@@ -90,11 +90,6 @@ namespace :simplified_starling do
     rescue Exception => error
       Simplified::Starling.feedback(error.message)
     end
-  end
-
-  desc "Copy config files to config/starling/*"
-  task :setup do
-    Simplified::Starling.setup
   end
 
 end
