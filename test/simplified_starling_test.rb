@@ -38,8 +38,12 @@ class Post < ActiveRecord::Base
     update_all :status => false
   end
 
-  def self.generate
-    create :title => "This is me at #{Time.now.to_s(:db)}", :status => false
+  def self.generate(options = {})
+    create :title => options[:title], :status => false
+  end
+
+  def update_title(options = {})
+    update_attribute :title, options[:title]
   end
 
 end
@@ -94,6 +98,20 @@ class SimplifiedStarlingTest < Test::Unit::TestCase
     sleep 10
     assert_equal 0, Simplified::Starling.stats.last
     assert_equal 100, Post.count
+  end
+
+  def test_class_methods_support_options
+    Post.push(:generate, { :title => "Joe" })
+    Simplified::Starling.pop(STARLING_CONFIG['queue'])
+    assert Post.find_by_title("Joe")
+  end
+
+  def test_instance_methods_support_options
+    post = Post.find(:first)
+    assert post.reload.title != "Joe"
+    post.push(:update_title, { :title => "Joe" })
+    Simplified::Starling.pop(STARLING_CONFIG['queue'])
+    assert post.reload.title == "Joe"
   end
 
 end

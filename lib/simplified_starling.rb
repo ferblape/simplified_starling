@@ -8,6 +8,15 @@ module Simplified
 
   class Starling
 
+    def self.autoload_missing_constants
+      yield
+    rescue ArgumentError, MemCache::MemCacheError => error
+      lazy_load ||= Hash.new { |hash, key| hash[key] = true; false }
+      retry if error.to_s.include?('undefined class') && 
+        !lazy_load[error.to_s.split.last.constantize]
+      raise error
+    end
+
     def self.running?
       config = YAML.load_file("#{RAILS_ROOT}/config/starling.yml")[RAILS_ENV]
       if File.exist?(config['pid_file'])
@@ -48,12 +57,13 @@ module Simplified
     end
 
     def self.pop(queue)
-      job = STARLING.get(queue)
       begin
+        job = autoload_missing_constants { STARLING.get(queue) }
+        args = [job[:task]] + job[:options] # what to send to the object
         if job[:id]
-          job[:type].constantize.find(job[:id]).send(job[:task])
+          job[:type].constantize.find(job[:id]).send(*args)
         else
-          job[:type].constantize.send(job[:task])
+          job[:type].constantize.send(*args)
         end
         STARLING_LOG.info "[#{Time.now.to_s(:db)}] Popped #{job[:task]} on #{job[:type]} #{job[:id]}"
       rescue ActiveRecord::RecordNotFound

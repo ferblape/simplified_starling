@@ -3,7 +3,7 @@ module SimplifiedStarling
   ##
   # Push record task into the queue
   #
-  def push(task)
+  def push(task, *args)
 
     ActiveRecord::Base.verify_active_connections! if defined?(ActiveRecord)
 
@@ -11,6 +11,7 @@ module SimplifiedStarling
     job[:type] = (self.kind_of? Class) ? self.to_s : self.class.to_s
     job[:id] = (self.kind_of? Class) ? nil : self.id
     job[:task] = task
+    job[:options] = args
 
     STARLING.set(STARLING_CONFIG['queue'], job)
 
