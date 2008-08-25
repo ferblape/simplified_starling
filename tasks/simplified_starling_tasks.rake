@@ -39,10 +39,10 @@ namespace :simplified_starling do
 
   desc "Restart starling server"
   task :restart do
-    config = YAML.load_file("#{RAILS_ROOT}/config/starling.yml")
+    config = YAML.load_file("#{RAILS_ROOT}/config/starling.yml")[RAILS_ENV]
     pid_file = config['pid_file']
-    Rake::Task['simplified:starling:stop'].invoke if File.exist?(pid_file)
-    Rake::Task['simplified:starling:start'].invoke
+    Rake::Task['simplified_starling:stop'].invoke if File.exist?(pid_file)
+    Rake::Task['simplified_starling:start'].invoke
   end
 
   desc "Start processing jobs (process is daemonized)"
@@ -77,9 +77,9 @@ namespace :simplified_starling do
 
   desc "Start starling and process jobs"
   task :start_and_process_jobs do
-    Rake::Task['simplified:starling:start'].invoke
+    Rake::Task['simplified_starling:start'].invoke
     sleep 10
-    Rake::Task['simplified:starling:start_processing_jobs'].invoke
+    Rake::Task['simplified_starling:start_processing_jobs'].invoke
   end
 
   desc "Server stats"
