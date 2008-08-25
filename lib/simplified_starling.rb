@@ -1,6 +1,5 @@
 begin
   STARLING_CONFIG = YAML.load_file("#{File.dirname(__FILE__)}/../../../../config/starling.yml")[RAILS_ENV]
-  STARLING_PID = STARLING_CONFIG['pid_file']
   STARLING_LOG = Logger.new(STARLING_CONFIG['log_file'])
   STARLING = Starling.new("#{STARLING_CONFIG['host']}:#{STARLING_CONFIG['port']}")
 end
@@ -26,7 +25,7 @@ module Simplified
         ##
         # Write pid file in pid folder
         #
-        File.open(STARLING_PID, "w") do |pid_file|
+        File.open(STARLING_CONFIG['queue_pid_file'], "w") do |pid_file|
           pid_file.puts pid
         end
 
