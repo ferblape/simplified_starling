@@ -9,6 +9,7 @@ development:
   log_level: DEBUG
   daemonize: true
   queue: development
+  queue_pid_file: <%= pwd %>/tmp/pids/starling_queue_development.pid
 
 test:
   host: 127.0.0.1
@@ -21,6 +22,7 @@ test:
   log_level: DEBUG
   daemonize: true
   queue: test
+  queue_pid_file: <%= pwd %>/tmp/pids/starling_queue_test.pid
 
 production:
   host: 127.0.0.1
@@ -33,3 +35,4 @@ production:
   log_level: DEBUG
   daemonize: true
   queue: production
+  queue_pid_file: <%= pwd %>/tmp/pids/starling_queue_production.pid
