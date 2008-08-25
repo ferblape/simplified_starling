@@ -2,6 +2,7 @@ development:
   host: 127.0.0.1
   port: 22122
   pid_file: <%= pwd %>/tmp/pids/starling_development.pid
+  log_file: <%= pwd %>/log/development_starling.log"
   queue_path: <%= pwd %>/tmp/starling
   timeout: 0
   syslog_channel: starling-tampopo
@@ -13,6 +14,7 @@ test:
   host: 127.0.0.1
   port: 22122
   pid_file: <%= pwd %>/tmp/pids/starling_test.pid
+  log_file: <%= pwd %>/log/test_starling.log"
   queue_path: <%= pwd %>/tmp/starling
   timeout: 0
   syslog_channel: starling-tampopo
@@ -24,6 +26,7 @@ production:
   host: 127.0.0.1
   port: 22122
   pid_file: <%= pwd %>/tmp/pids/starling_production.pid
+  log_file: <%= pwd %>/log/production_starling.log"
   queue_path: <%= pwd %>/tmp/starling
   timeout: 0
   syslog_channel: starling-tampopo
