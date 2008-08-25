@@ -1,17 +1,11 @@
+RAILS_ENV = 'test'
+
 require 'test/unit'
 require 'rubygems'
 require 'active_record'
 require 'starling'
 require 'simplified_starling'
 require 'simplified_starling/active_record'
-
-RAILS_ROOT = "/tmp"
-RAILS_ENV = 'test'
-
-@starling_config_file = File.dirname(__FILE__) + '/starling.yml'
-
-STARLING_CONFIG = YAML.load_file(@starling_config_file)['starling']
-STARLING = Starling.new("#{STARLING_CONFIG['host']}:#{STARLING_CONFIG['port']}")
 
 ActiveRecord::Base.establish_connection(:adapter => "sqlite3", :dbfile => ":memory:")
 
@@ -71,13 +65,13 @@ class SimplifiedStarlingTest < Test::Unit::TestCase
     post = Post.find(:first)
     assert !post.status
     Post.push('publish_all')
-    Simplified::Starling.process('your_application_name')
+    Simplified::Starling.pop('test')
     post = Post.find(:first)
     assert post.status
     Post.push('unpublish_all')
     post = Post.find(:first)
     assert post.status
-    Simplified::Starling.process('your_application_name')
+    Simplified::Starling.pop(STARLING_CONFIG['queue'])
     post = Post.find(:first)
     assert !post.status
   end
@@ -86,18 +80,20 @@ class SimplifiedStarlingTest < Test::Unit::TestCase
     post = Post.find(:first)
     assert !post.status
     Post.find(:first).push('rebuild')
-    Simplified::Starling.process('your_application_name')
+    Simplified::Starling.pop(STARLING_CONFIG['queue'])
     post = Post.find(:first)
     assert post.status
   end
 
-  def test_should_insert_1000_items_and_count
+  def test_should_insert_100_items_and_count
     Post.destroy_all
     assert_equal Post.count, 0
-    1000.times { |i| Post.push('generate') }
-    Simplified::Starling.process('your_application_name')
-    sleep 30
-    assert_equal Post.count, 1000
+    100.times { Post.push('generate') }
+    assert_equal 100, Simplified::Starling.stats.last
+    100.times { Simplified::Starling.pop(STARLING_CONFIG['queue']) }
+    sleep 10
+    assert_equal 0, Simplified::Starling.stats.last
+    assert_equal 100, Post.count
   end
 
 end

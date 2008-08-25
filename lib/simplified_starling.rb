@@ -1,9 +1,7 @@
-##
-# Load starling setting and connect application to starling.
-#
 begin
-  STARLING_LOG = Logger.new("#{RAILS_ROOT}/log/#{RAILS_ENV}_starling.log")
-  STARLING_CONFIG = YAML.load_file("#{RAILS_ROOT}/config/starling.yml")[RAILS_ENV]
+  STARLING_CONFIG = YAML.load_file("#{File.dirname(__FILE__)}/../../../../config/starling.yml")[RAILS_ENV]
+  STARLING_PID = STARLING_CONFIG['pid_file']
+  STARLING_LOG = Logger.new(STARLING_CONFIG['log_file'])
   STARLING = Starling.new("#{STARLING_CONFIG['host']}:#{STARLING_CONFIG['port']}")
 end
 
@@ -28,7 +26,7 @@ module Simplified
         ##
         # Write pid file in pid folder
         #
-        File.open("#{RAILS_ROOT}/tmp/pids/starling_#{RAILS_ENV}.pid", "w") do |pid_file|
+        File.open(STARLING_PID, "w") do |pid_file|
           pid_file.puts pid
         end
 
@@ -61,22 +59,13 @@ module Simplified
     end
 
     def self.stats
-      config_file = Dir.getwd + "/config/starling.yml"
+      config_file = File.dirname(__FILE__) + "/../../../../config/starling.yml"
       config = YAML.load_file(config_file)[RAILS_ENV]
       return config['queue'], STARLING.sizeof(config['queue'])
     end
 
     def self.feedback(message)
       puts "=> [SIMPLIFIED STARLING] #{message}"
-    end
-
-    def self.setup
-      starling_plugin_folder = Dir.getwd + "/vendor/plugins/simplified_starling"
-      starling_config = Dir.getwd + "/config/starling.yml"
-      unless File.exist?(starling_config)
-        FileUtils.cp starling_plugin_folder + "/files/starling.yml.tpl", starling_config
-        puts "=> Copied configuration file"
-      end
     end
 
   end
