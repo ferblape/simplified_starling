@@ -22,40 +22,34 @@ folder of your Rails application named +starling.yml+.
     development:
       host: 127.0.0.1
       port: 22122
-      pid_file: /tmp/starling.pid
-      queue_path: /tmp
-      timeout: 0
-      syslog_channel: starling-tampopo
-      log_level: DEBUG
-      daemonize: true
-      queue: app_development
+      ...
 
 Note: If you don't use the `script/plugin install` to install the plugin 
 configuration files will not be created. From the root folder of your Rails 
 application run the following command to create them.
 
-    $ rake simplified:starling:setup
+    $ ruby vendor/plugins/simplified_starling/install.rb
 
 === How it works?
 
 With +starling+ installed in your machine you can start/stop/restart Starling 
 by running.
 
-    $ rake simplified:starling:start
-    $ rake simplified:starling:stop
-    $ rake simplified:starling:restart
+    $ rake simplified_starling:start
+    $ rake simplified_starling:stop
+    $ rake simplified_starling:restart
 
 Once Starling is being started you can start processing jobs.
 
-    $ rake simplified:starling:start_processing_jobs
+    $ rake simplified_starling:start_processing_jobs
 
 You can start Starling and start processing jobs by ...
 
-    $ rake simplified:starling:start_and_process_jobs
+    $ rake simplified_starling:start_and_process_jobs
 
 If you want to stop processing jobs ...
 
-    $ rake simplified:starling:stop_processing_jobs
+    $ rake simplified_starling:stop_processing_jobs
 
 You can put anything into Starling, but after using Starling on a couple of 
 projects I've seen I use always the same hash for storing the jobs. This will 
@@ -82,7 +76,7 @@ the task +recalculate+ which belongs to a model.
 
 To view queue stats ...
 
-    $ rake simplified:starling:stats
+    $ rake simplified_starling:stats
 
 Processed jobs are logged.
 
