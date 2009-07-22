@@ -1,5 +1,5 @@
 begin
-  STARLING_CONFIG = YAML.load_file("#{File.dirname(__FILE__)}/../../../../config/starling.yml")[RAILS_ENV]
+  STARLING_CONFIG = YAML.load_file("#{File.dirname(__FILE__)}/../../../../config/starling.yml")[RAILS_ENV] unless defined?(STARLING_CONFIG)
   STARLING_LOG = Logger.new(STARLING_CONFIG['log_file'])
   STARLING = Starling.new("#{STARLING_CONFIG['host']}:#{STARLING_CONFIG['port']}")
 end
@@ -70,16 +70,16 @@ module Simplified
         STARLING_LOG.warn "[#{Time.now.to_s(:db)}] WARNING #{job[:type]}##{job[:id]} gone from database."
       rescue ActiveRecord::StatementInvalid
         STARLING_LOG.warn "[#{Time.now.to_s(:db)}] WARNING Database connection gone, reconnecting & retrying."
-        ActiveRecord::Base.connection.reconnect! and retry
+        STARLING.set(queue, job)
+        ActiveRecord::Base.connection.reconnect!
+        retry
       rescue Exception => error
         STARLING_LOG.error "[#{Time.now.to_s(:db)}] ERROR #{error.message}"
       end
     end
 
     def self.stats
-      config_file = File.dirname(__FILE__) + "/../../../../config/starling.yml"
-      config = YAML.load_file(config_file)[RAILS_ENV]
-      return config['queue'], STARLING.sizeof(config['queue'])
+      return STARLING_CONFIG['queue'], STARLING.sizeof(STARLING_CONFIG['queue'])
     end
 
     def self.feedback(message)

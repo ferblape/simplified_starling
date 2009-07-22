@@ -3,7 +3,41 @@ RAILS_ENV = 'test'
 require 'test/unit'
 require 'rubygems'
 require 'active_record'
-require 'starling'
+require 'mocha'
+require 'ruby-debug'
+
+# Mocking stuff
+STARLING_CONFIG = {}
+STARLING_CONFIG['queue'] = 'test'
+
+class Logger
+  def initialize(file); end
+  def warn(s); end
+  def info(s); end
+  def error(s); end    
+end
+
+class Starling
+  def initialize(address)
+    @memory = {}
+  end
+  
+  def get(queue)
+    @memory[queue] ||= []
+    YAML.load(@memory[queue].pop)
+  end
+  
+  def set(queue, job)
+    @memory[queue] ||= []
+    @memory[queue] << job.to_yaml    
+  end
+  
+  def sizeof(queue)
+    @memory[queue] ||= []
+    @memory[queue].size
+  end
+end
+
 require 'simplified_starling'
 require 'simplified_starling/active_record'
 
@@ -64,7 +98,7 @@ class SimplifiedStarlingTest < Test::Unit::TestCase
     a.push("d", "e", "f")
     assert_equal a, ["a", "b", "c", "d", "e", "f"]
   end
-
+  
   def test_should_push_a_class_method_on_post
     post = Post.find(:first)
     assert !post.status
@@ -79,7 +113,7 @@ class SimplifiedStarlingTest < Test::Unit::TestCase
     post = Post.find(:first)
     assert !post.status
   end
-
+  
   def test_should_push_an_instance_method_on_post
     post = Post.find(:first)
     assert !post.status
@@ -88,7 +122,7 @@ class SimplifiedStarlingTest < Test::Unit::TestCase
     post = Post.find(:first)
     assert post.status
   end
-
+  
   def test_should_insert_100_items_and_count
     Post.destroy_all
     assert_equal Post.count, 0
@@ -99,17 +133,26 @@ class SimplifiedStarlingTest < Test::Unit::TestCase
     assert_equal 0, Simplified::Starling.stats.last
     assert_equal 100, Post.count
   end
-
+  
   def test_class_methods_support_options
     Post.push(:generate, { :title => "Joe" })
     Simplified::Starling.pop(STARLING_CONFIG['queue'])
     assert Post.find_by_title("Joe")
   end
-
+  
   def test_instance_methods_support_options
     post = Post.find(:first)
     assert post.reload.title != "Joe"
     post.push(:update_title, { :title => "Joe" })
+    Simplified::Starling.pop(STARLING_CONFIG['queue'])
+    assert post.reload.title == "Joe"
+  end
+
+  def test_when_raises_active_record_statement_invalid_exception_job_does_not_get_lost    
+    post = Post.find(:first)
+    assert post.reload.title != "Joe"
+    post.push(:update_title, { :title => "Joe" })
+    ActiveRecord::Base.connection.disconnect!
     Simplified::Starling.pop(STARLING_CONFIG['queue'])
     assert post.reload.title == "Joe"
   end
