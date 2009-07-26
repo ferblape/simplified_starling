@@ -93,3 +93,26 @@ namespace :simplified_starling do
   end
 
 end
+
+namespace :ss do
+  desc "Start starling server"
+  task :start => "simplified_starling:start"
+  desc "Stop starling server"
+  task :stop  => "simplified_starling:stop"
+  desc "Restart starling server"
+  task :restart => "simplified_starling:restart"
+  desc "Start processing jobs (process is daemonized)"
+  task :start_processing_jobs => "simplified_starling:start_processing_jobs"
+  desc "Start processing jobs (process is daemonized)"
+  task :start_prcs => "simplified_starling:start_processing_jobs"
+  desc "Stop processing jobs"
+  task :stop_processing_jobs => "simplified_starling:stop_processing_jobs"
+  desc "Stop processing jobs"
+  task :stop_prcs => "simplified_starling:stop_processing_jobs"
+  desc "Start starling and process jobs"
+  task :start_and_process_jobs => "simplified_starling:start_and_process_jobs"
+  desc "Start starling and process jobs"
+  task :spj => "simplified_starling:start_and_process_jobs"
+  desc "Server stats"
+  task :stats => "simplified_starling:stats"
+end
