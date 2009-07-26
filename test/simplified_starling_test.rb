@@ -152,7 +152,9 @@ class SimplifiedStarlingTest < Test::Unit::TestCase
     post = Post.find(:first)
     assert post.reload.title != "Joe"
     post.push(:update_title, { :title => "Joe" })
-    ActiveRecord::Base.connection.disconnect!
+    # First try to find raises StatementInvalid, so the rescue is executed
+    # On the second try, find works as usual
+    Post.stubs(:find).raises(ActiveRecord::StatementInvalid).then.returns(post)
     Simplified::Starling.pop(STARLING_CONFIG['queue'])
     assert post.reload.title == "Joe"
   end
