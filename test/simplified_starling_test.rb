@@ -19,22 +19,22 @@ end
 
 class Starling
   def initialize(address)
-    @memory = {}
+    @queues = {}
   end
   
   def get(queue)
-    @memory[queue] ||= []
-    YAML.load(@memory[queue].pop)
+    @queues[queue] ||= []
+    YAML.load(@queues[queue].pop)
   end
   
   def set(queue, job)
-    @memory[queue] ||= []
-    @memory[queue] << job.to_yaml    
+    @queues[queue] ||= []
+    @queues[queue] << job.to_yaml    
   end
   
   def sizeof(queue)
-    @memory[queue] ||= []
-    @memory[queue].size
+    @queues[queue] ||= []
+    @queues[queue].size
   end
 end
 
@@ -144,17 +144,6 @@ class SimplifiedStarlingTest < Test::Unit::TestCase
     post = Post.find(:first)
     assert post.reload.title != "Joe"
     post.push(:update_title, { :title => "Joe" })
-    Simplified::Starling.pop(STARLING_CONFIG['queue'])
-    assert post.reload.title == "Joe"
-  end
-
-  def test_when_raises_active_record_statement_invalid_exception_job_does_not_get_lost    
-    post = Post.find(:first)
-    assert post.reload.title != "Joe"
-    post.push(:update_title, { :title => "Joe" })
-    # First try to find raises StatementInvalid, so the rescue is executed
-    # On the second try, find works as usual
-    Post.stubs(:find).raises(ActiveRecord::StatementInvalid).then.returns(post)
     Simplified::Starling.pop(STARLING_CONFIG['queue'])
     assert post.reload.title == "Joe"
   end

@@ -57,25 +57,19 @@ module Simplified
     end
 
     def self.pop(queue)
-      begin
-        job = autoload_missing_constants { STARLING.get(queue) }
-        args = [job[:task]] + job[:options] # what to send to the object
-        if job[:id]
-          job[:type].constantize.find(job[:id]).send(*args)
-        else
-          job[:type].constantize.send(*args)
-        end
-        STARLING_LOG.info "[#{Time.now.to_s(:db)}] Popped #{job[:task]} on #{job[:type]} #{job[:id]}"
-      rescue ActiveRecord::RecordNotFound
-        STARLING_LOG.warn "[#{Time.now.to_s(:db)}] WARNING #{job[:type]}##{job[:id]} gone from database."
-      rescue ActiveRecord::StatementInvalid
-        STARLING_LOG.warn "[#{Time.now.to_s(:db)}] WARNING Database connection gone, reconnecting & retrying."
-        STARLING.set(queue, job)
-        ActiveRecord::Base.connection.reconnect!
-        retry
-      rescue Exception => error
-        STARLING_LOG.error "[#{Time.now.to_s(:db)}] ERROR #{error.message}"
+      ActiveRecord::Base.verify_active_connections!
+      job = autoload_missing_constants { STARLING.get(queue) }
+      args = [job[:task]] + job[:options] # what to send to the object
+      if job[:id]
+        job[:type].constantize.find(job[:id]).send(*args)
+      else
+        job[:type].constantize.send(*args)
       end
+      STARLING_LOG.info "[#{Time.now.to_s(:db)}] Popped #{job[:task]} on #{job[:type]} #{job[:id]}"
+    rescue ActiveRecord::RecordNotFound
+      STARLING_LOG.warn "[#{Time.now.to_s(:db)}] WARNING #{job[:type]}##{job[:id]} gone from database."
+    rescue Exception => error
+      STARLING_LOG.error "[#{Time.now.to_s(:db)}] ERROR #{error.message}"
     end
 
     def self.stats
