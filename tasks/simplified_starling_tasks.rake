@@ -15,7 +15,7 @@ namespace :simplified_starling do
       options << "--port #{config['port']}"
       options << "-d" if config['daemonize']
       options << "--pid #{config['pid_file']}"
-      options << "--syslog #{config['syslog_channel']}"
+      options << "--syslog #{config['syslog_channel']}" if config['syslog_channel']
       options << "--timeout #{config['timeout']}"
       system "#{starling_binary} #{options.join(' ')}"
       Simplified::Starling.feedback("Starling successfully started")
@@ -104,15 +104,15 @@ namespace :ss do
   desc "Start processing jobs (process is daemonized)"
   task :start_processing_jobs => "simplified_starling:start_processing_jobs"
   desc "Start processing jobs (process is daemonized)"
-  task :start_prcs => "simplified_starling:start_processing_jobs"
+  task :start_pj => "simplified_starling:start_processing_jobs"
   desc "Stop processing jobs"
   task :stop_processing_jobs => "simplified_starling:stop_processing_jobs"
   desc "Stop processing jobs"
-  task :stop_prcs => "simplified_starling:stop_processing_jobs"
+  task :stop_pj => "simplified_starling:stop_processing_jobs"
   desc "Start starling and process jobs"
   task :start_and_process_jobs => "simplified_starling:start_and_process_jobs"
   desc "Start starling and process jobs"
-  task :spj => "simplified_starling:start_and_process_jobs"
+  task :s_and_pj => "simplified_starling:start_and_process_jobs"
   desc "Server stats"
   task :stats => "simplified_starling:stats"
 end
