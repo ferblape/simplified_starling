@@ -46,8 +46,8 @@ namespace :simplified_starling do
   task :start_processing_jobs => :environment do
     begin
       config = STARLING_CONFIG
-      SimplifiedStarling.queues.each do |queue|
-        queue_pid_file = SimplifiedStarling.config(queue)['queue_pid_file']
+      Simplified::Starling.queues.each do |queue|
+        queue_pid_file = Simplified::Starling.config(queue)['queue_pid_file']
         unless File.exist?(queue_pid_file)
           Simplified::Starling.stats(queue)
           Simplified::Starling.process(queue)
@@ -64,8 +64,8 @@ namespace :simplified_starling do
   desc "Stop processing jobs"
   task :stop_processing_jobs do
     config = STARLING_CONFIG
-    SimplifiedStarling.queues.each do |queue|
-      queue_pid_file = SimplifiedStarling.config(queue)['queue_pid_file']
+    Simplified::Starling.queues.each do |queue|
+      queue_pid_file = Simplified::Starling.config(queue)['queue_pid_file']
       if File.exist?(queue_pid_file)
         system "kill -9 `cat #{queue_pid_file}`"
         Simplified::Starling.feedback("Stopped processing jobs for queue #{queue}")
@@ -86,7 +86,7 @@ namespace :simplified_starling do
   desc "Server stats"
   task :stats do
     begin
-      SimplifiedStarling.queues.each do |queue|
+      Simplified::Starling.queues.each do |queue|
         queue, items = Simplified::Starling.stats(queue)
         Simplified::Starling.feedback("Queue #{queue} has #{items} jobs")
       end
@@ -115,7 +115,7 @@ namespace :ss do
   desc "Start starling and process jobs"
   task :start_and_process_jobs => "simplified_starling:start_and_process_jobs"
   desc "Start starling and process jobs"
-  task :s_and_pj => "simplified_starling:start_and_process_jobs"
+  task :start_and_pj => "simplified_starling:start_and_process_jobs"
   desc "Server stats"
   task :stats => "simplified_starling:stats"
 end

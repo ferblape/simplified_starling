@@ -10,8 +10,8 @@ module SimplifiedStarling
     job[:type] = (self.kind_of? Class) ? self.to_s : self.class.to_s
     job[:id] = (self.kind_of? Class) ? nil : self.id
     job[:task] = task
-    job[:queue] = args.first.delete(:queue) if args.any?
-    job[:queue] ||= SimplifiedStarling.default_queue
+    job[:queue] = args.first.delete(:queue) if args.any? && args.first.is_a?(Hash) && args.first[:queue]
+    job[:queue] ||= Simplified::Starling.default_queue
     job[:options] = args
 
     STARLING.set(job[:queue], job)
@@ -24,7 +24,7 @@ module SimplifiedStarling
   end
 
   # Define methods push_in_<queue_name>
-  SimplifiedStarling.queues.each do |queue|
+  Simplified::Starling.queues.each do |queue|
     define_method "push_in_#{queue}".to_sym do |task, *args|
       push(task, args.first.merge(:queue => queue))
     end

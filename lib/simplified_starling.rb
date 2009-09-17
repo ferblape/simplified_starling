@@ -1,18 +1,25 @@
-module SimplifiedStarling
-  def self.config(queue = nil)
-    queue ? STARLING_CONFIG['queues'][queue] : STARLING_CONFIG['queues']
-  end
-  def self.queues
-    self.config.keys.first
-  end
-  def self.default_queue
-    self.queues.first
-  end
+begin
+  STARLING_CONFIG = YAML.load_file("#{File.dirname(__FILE__)}/../../../../config/starling.yml")[RAILS_ENV] unless defined?(STARLING_CONFIG)
+  STARLING_LOG = Logger.new(STARLING_CONFIG['log_file'])
+  STARLING = Starling.new("#{STARLING_CONFIG['host']}:#{STARLING_CONFIG['port']}")
 end
 
 module Simplified
 
   class Starling
+    
+    def self.config(queue = nil)
+      config = YAML.load_file("#{File.dirname(__FILE__)}/../../../../config/starling.yml")[RAILS_ENV]
+      queue ? config['queues'][queue] : config
+    end
+    
+    def self.queues
+      self.config['queues'].keys
+    end
+    
+    def self.default_queue
+      self.queues.first
+    end
 
     def self.autoload_missing_constants
       yield
@@ -23,17 +30,17 @@ module Simplified
       raise error
     end
 
-    def self.running?(queue)
-      config = SimplifiedStarling.config(queue)
-      if File.exist?(config['queue_pid_file'])
-        Process.getpgid(File.read(config['queue_pid_file']).to_i) rescue return false
+    def self.running?
+      pid_file = self.config['pid_file']
+      if File.exist?(pid_file)
+        Process.getpgid(File.read(pid_file).to_i) rescue return false
       else
         return false
       end
     end
 
     def self.process(queue, daemonize = true)
-      config = SimplifiedStarling.config(queue)
+      config = self.config(queue)
       pid = fork do
         Signal.trap('HUP', 'IGNORE') # Don't die upon logout
         loop { pop(queue) }

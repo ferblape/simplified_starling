@@ -7,9 +7,9 @@ development:
   syslog_channel: starling-tampopo
   log_level: DEBUG
   daemonize: true
+  queue_path: <%= pwd %>/tmp/starling
   queues:
     development:
-      queue_path: <%= pwd %>/tmp/starling
       queue_pid_file: <%= pwd %>/tmp/pids/starling_queue_development.pid
 
 test:
