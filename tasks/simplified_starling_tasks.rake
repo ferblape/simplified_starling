@@ -1,22 +1,21 @@
 require 'starling'
-require "#{RAILS_ROOT}/vendor/plugins/simplified_starling/lib/simplified_starling"
+require "#{RAILS_ROOT}/vendor/plugins/simplified_starling/init"
 
 namespace :simplified_starling do
 
   desc "Start starling server"
   task :start do
-    config = YAML.load_file("#{RAILS_ROOT}/config/starling.yml")[RAILS_ENV]
     unless Simplified::Starling.running?
       starling_binary = `which starling`.strip
       raise RuntimeError, "Cannot find starling" if starling_binary.blank?
       options = []
-      options << "--queue_path #{config['queue_path']}"
-      options << "--host #{config['host']}"
-      options << "--port #{config['port']}"
-      options << "-d" if config['daemonize']
-      options << "--pid #{config['pid_file']}"
-      options << "--syslog #{config['syslog_channel']}" if config['syslog_channel']
-      options << "--timeout #{config['timeout']}"
+      options << "--queue_path #{STARLING_CONFIG['queue_path']}"
+      options << "--host #{STARLING_CONFIG['host']}"
+      options << "--port #{STARLING_CONFIG['port']}"
+      options << "-d" if STARLING_CONFIG['daemonize']
+      options << "--pid #{STARLING_CONFIG['pid_file']}"
+      options << "--syslog #{STARLING_CONFIG['syslog_channel']}" if STARLING_CONFIG['syslog_channel']
+      options << "--timeout #{STARLING_CONFIG['timeout']}"
       system "#{starling_binary} #{options.join(' ')}"
       Simplified::Starling.feedback("Starling successfully started")
     else
@@ -26,8 +25,7 @@ namespace :simplified_starling do
 
   desc "Stop starling server"
   task :stop do
-    config = YAML.load_file("#{RAILS_ROOT}/config/starling.yml")[RAILS_ENV]
-    pid_file = config['pid_file']
+    pid_file = STARLING_CONFIG['pid_file']
     if File.exist?(pid_file)
       system "kill -9 `cat #{pid_file}`"
       Simplified::Starling.feedback("Starling successfully stopped")
@@ -39,8 +37,7 @@ namespace :simplified_starling do
 
   desc "Restart starling server"
   task :restart do
-    config = YAML.load_file("#{RAILS_ROOT}/config/starling.yml")[RAILS_ENV]
-    pid_file = config['pid_file']
+    pid_file = STARLING_CONFIG['pid_file']
     Rake::Task['simplified_starling:stop'].invoke if File.exist?(pid_file)
     Rake::Task['simplified_starling:start'].invoke
   end
@@ -85,8 +82,10 @@ namespace :simplified_starling do
   desc "Server stats"
   task :stats do
     begin
-      queue, items = Simplified::Starling.stats
-      Simplified::Starling.feedback("Queue has #{items} jobs")
+      SimplifiedStarling.queues.each do |queue|
+        queue, items = Simplified::Starling.stats(queue)
+        Simplified::Starling.feedback("Queue #{queue} has #{items} jobs")
+      end
     rescue Exception => error
       Simplified::Starling.feedback(error.message)
     end

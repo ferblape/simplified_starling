@@ -6,10 +6,6 @@ require 'active_record'
 require 'mocha'
 require 'ruby-debug'
 
-# Mocking stuff
-STARLING_CONFIG = {}
-STARLING_CONFIG['queue'] = 'test'
-
 # Logger mock
 class Logger
   def initialize(file); end
@@ -40,7 +36,30 @@ class Starling
   end
 end
 
+# Mocking stuff
+STARLING_CONFIG = {}
+STARLING_LOG = Logger.new('wadus')
+STARLING = Starling.new('wadus.host:11211')
+
 require 'simplified_starling'
+
+# Mocked configuration with multiple queues
+module SimplifiedStarling
+  def self.config(queue = nil)
+    config = {
+      'queue_1' => {
+        'queue_pid_file' => 'pid_queue_1.pid',
+        'queue_path' => 'queue_path_1'
+      },
+      'queue_2' => {
+        'queue_pid_file' => 'pid_queue_2.pid',
+        'queue_path' => 'queue_path_2'      
+      }
+    }
+    queue ? config[queue] : config
+  end
+end
+
 require 'simplified_starling/active_record'
 
 ActiveRecord::Base.establish_connection(:adapter => "sqlite3", :database => ":memory:")
@@ -102,25 +121,27 @@ class SimplifiedStarlingTest < Test::Unit::TestCase
   end
   
   def test_should_push_a_class_method_on_post
+    queue = SimplifiedStarling.default_queue
     post = Post.find(:first)
     assert !post.status
     Post.push('publish_all')
-    Simplified::Starling.pop('test')
+    Simplified::Starling.pop(queue)
     post = Post.find(:first)
     assert post.status
     Post.push('unpublish_all')
     post = Post.find(:first)
     assert post.status
-    Simplified::Starling.pop(STARLING_CONFIG['queue'])
+    Simplified::Starling.pop(queue)
     post = Post.find(:first)
     assert !post.status
   end
   
   def test_should_push_an_instance_method_on_post
+    queue = SimplifiedStarling.default_queue
     post = Post.find(:first)
     assert !post.status
     Post.find(:first).push('rebuild')
-    Simplified::Starling.pop(STARLING_CONFIG['queue'])
+    Simplified::Starling.pop(queue)
     post = Post.find(:first)
     assert post.status
   end
@@ -128,26 +149,49 @@ class SimplifiedStarlingTest < Test::Unit::TestCase
   def test_should_insert_100_items_and_count
     Post.destroy_all
     assert_equal Post.count, 0
+    queue = SimplifiedStarling.default_queue
     100.times { Post.push('generate') }
-    assert_equal 100, Simplified::Starling.stats.last
-    100.times { Simplified::Starling.pop(STARLING_CONFIG['queue']) }
+    assert_equal 100, Simplified::Starling.stats(queue).last
+    100.times { Simplified::Starling.pop(queue) }
     sleep 10
-    assert_equal 0, Simplified::Starling.stats.last
+    assert_equal 0, Simplified::Starling.stats(queue).last
     assert_equal 100, Post.count
   end
   
+  def test_options_queue
+    default_queue = SimplifiedStarling.default_queue
+    queue = SimplifiedStarling.queues.last
+    assert default_queue != queue
+    Post.push(:generate, { :title => "Joe", :queue => queue })
+    Simplified::Starling.pop(default_queue)
+    assert_nil Post.find_by_title("Joe")
+    Simplified::Starling.pop(queue)
+    assert Post.find_by_title("Joe")
+  end
+  
   def test_class_methods_support_options
+    queue = SimplifiedStarling.default_queue
     Post.push(:generate, { :title => "Joe" })
-    Simplified::Starling.pop(STARLING_CONFIG['queue'])
+    Simplified::Starling.pop(queue)
     assert Post.find_by_title("Joe")
   end
   
   def test_instance_methods_support_options
+    queue = SimplifiedStarling.default_queue
     post = Post.find(:first)
     assert post.reload.title != "Joe"
     post.push(:update_title, { :title => "Joe" })
-    Simplified::Starling.pop(STARLING_CONFIG['queue'])
+    Simplified::Starling.pop(queue)
     assert post.reload.title == "Joe"
+  end
+  
+  def test_customized_push_methods_for_each_queue
+    post = Post.find(:first)
+    SimplifiedStarling.queues.each do |queue|
+      post.send("push_in_#{queue}".to_sym, :update_title, { :title => "Joe_#{queue}" })
+      Simplified::Starling.pop(queue)
+      assert post.reload.title == "Joe_#{queue}"
+    end
   end
 
 end
