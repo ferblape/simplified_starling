@@ -45,14 +45,16 @@ namespace :simplified_starling do
   desc "Start processing jobs (process is daemonized)"
   task :start_processing_jobs => :environment do
     begin
-      config = YAML.load_file("#{RAILS_ROOT}/config/starling.yml")[RAILS_ENV]
-      queue_pid_file = config['queue_pid_file']
-      unless File.exist?(queue_pid_file)
-        Simplified::Starling.stats
-        Simplified::Starling.process(config['queue'])
-        Simplified::Starling.feedback("Started processing jobs")
-      else
-        Simplified::Starling.feedback("Jobs are already being processed")
+      config = STARLING_CONFIG
+      SimplifiedStarling.queues.each do |queue|
+        queue_pid_file = SimplifiedStarling.config(queue)['queue_pid_file']
+        unless File.exist?(queue_pid_file)
+          Simplified::Starling.stats(queue)
+          Simplified::Starling.process(queue)
+          Simplified::Starling.feedback("Started processing jobs for queue #{queue}")
+        else
+          Simplified::Starling.feedback("Jobs are already being processed in #{queue}")
+        end
       end
     rescue Exception => error
       Simplified::Starling.feedback(error.message)
@@ -61,14 +63,16 @@ namespace :simplified_starling do
 
   desc "Stop processing jobs"
   task :stop_processing_jobs do
-    config = YAML.load_file("#{RAILS_ROOT}/config/starling.yml")[RAILS_ENV]
-    queue_pid_file = config['queue_pid_file']
-    if File.exist?(queue_pid_file)
-      system "kill -9 `cat #{queue_pid_file}`"
-      Simplified::Starling.feedback("Stopped processing jobs")
-      File.delete(queue_pid_file)
-    else
-      Simplified::Starling.feedback("Jobs are not being processed")
+    config = STARLING_CONFIG
+    SimplifiedStarling.queues.each do |queue|
+      queue_pid_file = SimplifiedStarling.config(queue)['queue_pid_file']
+      if File.exist?(queue_pid_file)
+        system "kill -9 `cat #{queue_pid_file}`"
+        Simplified::Starling.feedback("Stopped processing jobs for queue #{queue}")
+        File.delete(queue_pid_file)
+      else
+        Simplified::Starling.feedback("Jobs are not being processed in #{queue}")
+      end
     end
   end
 
