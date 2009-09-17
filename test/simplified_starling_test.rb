@@ -10,6 +10,7 @@ require 'ruby-debug'
 STARLING_CONFIG = {}
 STARLING_CONFIG['queue'] = 'test'
 
+# Logger mock
 class Logger
   def initialize(file); end
   def warn(s); end
@@ -17,6 +18,7 @@ class Logger
   def error(s); end    
 end
 
+# Starling mock
 class Starling
   def initialize(address)
     @queues = {}
@@ -41,7 +43,7 @@ end
 require 'simplified_starling'
 require 'simplified_starling/active_record'
 
-ActiveRecord::Base.establish_connection(:adapter => "sqlite3", :dbfile => ":memory:")
+ActiveRecord::Base.establish_connection(:adapter => "sqlite3", :database => ":memory:")
 
 def setup_db
   ActiveRecord::Schema.define(:version => 1) do
