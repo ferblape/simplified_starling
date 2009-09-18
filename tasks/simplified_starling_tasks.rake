@@ -42,11 +42,16 @@ namespace :simplified_starling do
     Rake::Task['simplified_starling:start'].invoke
   end
 
-  desc "Start processing jobs (process is daemonized)"
+  desc "Start processing jobs (process is daemonized) in all queues (you can indicate a queue withe QUEUE=<queue_name>)"
   task :start_processing_jobs => :environment do
     begin
       config = STARLING_CONFIG
-      Simplified::Starling.queues.each do |queue|
+      queues = if ENV['QUEUE']
+        [ENV['QUEUE']]
+      else
+        Simplified::Starling.queues
+      end
+      queues.each do |queue|
         queue_pid_file = Simplified::Starling.config(queue)['queue_pid_file']
         unless File.exist?(queue_pid_file)
           Simplified::Starling.stats(queue)
@@ -61,10 +66,15 @@ namespace :simplified_starling do
     end
   end
 
-  desc "Stop processing jobs"
+  desc "Stop processing jobs in all queues (you can indicate a queue withe QUEUE=<queue_name>)"
   task :stop_processing_jobs do
     config = STARLING_CONFIG
-    Simplified::Starling.queues.each do |queue|
+    queues = if ENV['QUEUE']
+      [ENV['QUEUE']]
+    else
+      Simplified::Starling.queues
+    end
+    queues.each do |queue|
       queue_pid_file = Simplified::Starling.config(queue)['queue_pid_file']
       if File.exist?(queue_pid_file)
         system "kill -9 `cat #{queue_pid_file}`"
@@ -104,13 +114,13 @@ namespace :ss do
   task :stop  => "simplified_starling:stop"
   desc "Restart starling server"
   task :restart => "simplified_starling:restart"
-  desc "Start processing jobs (process is daemonized)"
+  desc "Start processing jobs (process is daemonized) in all queues (you can indicate a queue withe QUEUE=<queue_name>)"
   task :start_processing_jobs => "simplified_starling:start_processing_jobs"
-  desc "Start processing jobs (process is daemonized)"
+  desc "Start processing jobs (process is daemonized) in all queues (you can indicate a queue withe QUEUE=<queue_name>)"
   task :start_pj => "simplified_starling:start_processing_jobs"
-  desc "Stop processing jobs"
+  desc "Stop processing jobs in all queues (you can indicate a queue withe QUEUE=<queue_name>)"
   task :stop_processing_jobs => "simplified_starling:stop_processing_jobs"
-  desc "Stop processing jobs"
+  desc "Stop processing jobs in all queues (you can indicate a queue withe QUEUE=<queue_name>)"
   task :stop_pj => "simplified_starling:stop_processing_jobs"
   desc "Start starling and process jobs"
   task :start_and_process_jobs => "simplified_starling:start_and_process_jobs"
