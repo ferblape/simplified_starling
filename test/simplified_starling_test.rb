@@ -102,6 +102,10 @@ class Post < ActiveRecord::Base
   def update_title(options = {})
     update_attribute :title, options[:title]
   end
+  
+  def self.update_status(new_status_value)
+    update_all :status => new_status_value
+  end
 
 end
 
@@ -195,5 +199,15 @@ class SimplifiedStarlingTest < Test::Unit::TestCase
       assert post.reload.title == "Joe_#{queue}"
     end
   end
+  
+  def test_customized_push_methods_for_each_queue_for_non_hash_arguments
+    post = Post.find(:first)
+    Simplified::Starling.queues.each do |queue|
+      post.send("push_in_#{queue}".to_sym, :update_status, false)
+      Simplified::Starling.pop(queue)
+      assert_equal false, post.status
+    end
+  end
+  
 
 end
