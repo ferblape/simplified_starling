@@ -26,6 +26,7 @@ module SimplifiedStarling
   # Define methods push_in_<queue_name>
   Simplified::Starling.queues.each do |queue|
     define_method "push_in_#{queue}".to_sym do |task, *args|
+      args = [{}] if args.empty?
       push(task, args.first.merge(:queue => queue))
     end
   end
