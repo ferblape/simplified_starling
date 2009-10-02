@@ -18,7 +18,7 @@ module Simplified
     end
     
     def self.default_queue
-      self.queues.first
+      self.config['default_queue'] || self.queues.first
     end
 
     def self.autoload_missing_constants
