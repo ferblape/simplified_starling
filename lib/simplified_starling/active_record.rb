@@ -10,7 +10,11 @@ module SimplifiedStarling
     job[:type] = (self.kind_of? Class) ? self.to_s : self.class.to_s
     job[:id] = (self.kind_of? Class) ? nil : self.id
     job[:task] = task
-    job[:queue] = args.last.delete(:queue) if args.any? && args.last.is_a?(Hash) && args.last[:queue]
+    if args.any? && args.last.is_a?(Hash) && args.last[:queue]
+      job[:queue] = args.last.delete(:queue)
+      # If the last argument is an empty hash whe should remove it
+      args.delete(args.last) if args.last.empty?
+    end
     job[:queue] ||= Simplified::Starling.default_queue
     job[:options] = args
 
@@ -27,7 +31,8 @@ module SimplifiedStarling
   Simplified::Starling.queues.each do |queue|
     define_method "push_in_#{queue}".to_sym do |task, *args|
       args << {} unless args.last.is_a?(Hash)
-      push(task, args.last.merge(:queue => queue))
+      args.last.merge!(:queue => queue)
+      push(task, *args)
     end
   end
 

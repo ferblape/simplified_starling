@@ -202,12 +202,20 @@ class SimplifiedStarlingTest < Test::Unit::TestCase
   
   def test_customized_push_methods_for_each_queue_for_non_hash_arguments
     post = Post.find(:first)
-    Simplified::Starling.queues.each do |queue|
-      post.send("push_in_#{queue}".to_sym, :update_status, false)
-      Simplified::Starling.pop(queue)
-      assert_equal false, post.status
-    end
+    queue = 'queue_1'
+    Post.push_in_queue_1(:update_status, true)
+    Simplified::Starling.pop(queue)
+    post.reload
+    assert_equal true, post.status
   end
   
-
+  def test_customized_push_methods_for_each_queue_for_no_arguments
+    post = Post.find(:first)
+    Simplified::Starling.queues.each do |queue|
+      Post.send("push_in_#{queue}".to_sym, :publish_all)
+      Simplified::Starling.pop(queue)
+      post.reload
+      assert_equal true, post.status
+    end
+  end
 end

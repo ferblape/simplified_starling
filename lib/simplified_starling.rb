@@ -74,7 +74,11 @@ module Simplified
     rescue ActiveRecord::RecordNotFound
       STARLING_LOG.warn "[#{Time.now.to_s(:db)}] WARNING from #{queue} #{job[:type]}##{job[:id]} gone from database."
     rescue Exception => error
-      STARLING_LOG.error "[#{Time.now.to_s(:db)}] ERROR #{error.message}"
+      if job
+        STARLING_LOG.error "[#{Time.now.to_s(:db)}] ERROR from #{queue} #{job[:task]} on #{job[:type]} #{job[:id]}: #{error.message}"
+      else
+        STARLING_LOG.error "[#{Time.now.to_s(:db)}] ERROR: #{error.message}"
+      end
     end
 
     def self.stats(queue)
