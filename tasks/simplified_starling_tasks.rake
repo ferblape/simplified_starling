@@ -27,7 +27,7 @@ namespace :simplified_starling do
   task :stop do
     pid_file = STARLING_CONFIG['pid_file']
     if File.exist?(pid_file)
-      system "kill `cat #{pid_file}`"
+      system "kill -9 `cat #{pid_file}`"
       Simplified::Starling.feedback("Starling successfully stopped")
       File.delete(pid_file)
     else
@@ -77,7 +77,7 @@ namespace :simplified_starling do
     queues.each do |queue|
       queue_pid_file = Simplified::Starling.config(queue)['queue_pid_file']
       if File.exist?(queue_pid_file)
-        system "kill `cat #{queue_pid_file}`"
+        system "kill -9 `cat #{queue_pid_file}`"
         Simplified::Starling.feedback("Stopped processing jobs for queue #{queue}")
         File.delete(queue_pid_file)
       else
