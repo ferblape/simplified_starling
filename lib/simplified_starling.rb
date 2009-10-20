@@ -65,12 +65,14 @@ module Simplified
       ActiveRecord::Base.verify_active_connections!
       job = autoload_missing_constants { STARLING.get(queue) }
       args = [job[:task]] + job[:options] # what to send to the object
-      if job[:id]
-        job[:type].constantize.find(job[:id]).send(*args)
-      else
-        job[:type].constantize.send(*args)
+      b = Benchmark.measure do 
+        if job[:id]
+          job[:type].constantize.find(job[:id]).send(*args)
+        else
+          job[:type].constantize.send(*args)
+        end
       end
-      STARLING_LOG.info "[#{Time.now.to_s(:db)}] Popped from #{queue} #{job[:task]} on #{job[:type]} #{job[:id]}"
+      STARLING_LOG.info "[#{Time.now.to_s(:db)}] Popped from #{queue} #{job[:task]} on #{job[:type]} #{job[:id]} (#{format("%.2f s", b.real)})"
     rescue ActiveRecord::RecordNotFound
       STARLING_LOG.warn "[#{Time.now.to_s(:db)}] WARNING from #{queue} #{job[:type]}##{job[:id]} gone from database."
     rescue Exception => error
